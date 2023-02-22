@@ -42,8 +42,8 @@ function tweakSigner(signer: bitcoin.Signer, opts: any = {}): bitcoin.Signer {
 
 enum AddressType {
   P2PKH,
-  SEGWIT,
-  TAPROOT,
+  P2WPKH,
+  P2TR,
 }
 
 export class SimpleKeyring extends EventEmitter {
@@ -51,19 +51,19 @@ export class SimpleKeyring extends EventEmitter {
   type = type;
   network: bitcoin.Network = bitcoin.networks.bitcoin;
   wallets: ECPairInterface[] = [];
-  constructor(opts: any) {
+  constructor(opts?: any) {
     super();
     if (opts) {
       this.deserialize(opts);
     }
   }
 
-  async serialize(): Promise<any> {
+  async serialize(): Promise<string[]> {
     return this.wallets.map((wallet) => wallet.privateKey.toString("hex"));
   }
 
-  async deserialize(opts: any) {
-    let privateKeys = opts as string[];
+  async deserialize(opts: string[]) {
+    const privateKeys = opts as string[];
     this.wallets = privateKeys.map((key) =>
       ECPair.fromPrivateKey(Buffer.from(key, "hex"))
     );
@@ -96,7 +96,7 @@ export class SimpleKeyring extends EventEmitter {
     inputs.forEach((input) => {
       const keyPair = this._getPrivateKeyFor(input.publicKey);
 
-      if (input.type == AddressType.TAPROOT) {
+      if (input.type == AddressType.P2TR) {
         const signer = tweakSigner(keyPair, {
           network: keyPair.network,
         });
