@@ -8,7 +8,7 @@ A simple JS class to be used in a `KeyringController`; such as the one used in [
 
 ## The Keyring Class Protocol
 
-One of the goals of this class is to allow developers to easily add new signing strategies to MetaMask. We call these signing strategies Keyrings, because they can manage multiple keys.
+One of the goals of this class is to allow developers to easily add new signing strategies to Unisat Wallet. We call these signing strategies Keyrings, because they can manage multiple keys.
 
 ### Keyring.type
 
