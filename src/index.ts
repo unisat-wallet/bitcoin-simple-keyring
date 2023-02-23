@@ -51,19 +51,19 @@ export class SimpleKeyring extends EventEmitter {
   type = type;
   network: bitcoin.Network = bitcoin.networks.bitcoin;
   wallets: ECPairInterface[] = [];
-  constructor(opts?: string[]) {
+  constructor(opts?: any) {
     super();
     if (opts) {
       this.deserialize(opts);
     }
   }
 
-  async serialize(): Promise<string[]> {
+  async serialize(): Promise<any> {
     return this.wallets.map((wallet) => wallet.privateKey.toString("hex"));
   }
 
-  async deserialize(opts: string[]) {
-    const privateKeys = opts;
+  async deserialize(opts: any) {
+    const privateKeys = opts as string[];
 
     this.wallets = privateKeys.map((key) => {
       let buf: Buffer;
