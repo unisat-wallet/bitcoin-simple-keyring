@@ -4,7 +4,7 @@ import ECPairFactory, { ECPairInterface } from "ecpair";
 import * as ecc from "tiny-secp256k1";
 bitcoin.initEccLib(ecc);
 const ECPair = ECPairFactory(ecc);
-
+import { decode } from "bs58check";
 const type = "Simple Key Pair";
 export const toXOnly = (pubKey: Buffer) =>
   pubKey.length === 32 ? pubKey : pubKey.slice(1, 33);
@@ -51,7 +51,7 @@ export class SimpleKeyring extends EventEmitter {
   type = type;
   network: bitcoin.Network = bitcoin.networks.bitcoin;
   wallets: ECPairInterface[] = [];
-  constructor(opts?: any) {
+  constructor(opts?: string[]) {
     super();
     if (opts) {
       this.deserialize(opts);
@@ -63,10 +63,20 @@ export class SimpleKeyring extends EventEmitter {
   }
 
   async deserialize(opts: string[]) {
-    const privateKeys = opts as string[];
-    this.wallets = privateKeys.map((key) =>
-      ECPair.fromPrivateKey(Buffer.from(key, "hex"))
-    );
+    const privateKeys = opts;
+
+    this.wallets = privateKeys.map((key) => {
+      let buf: Buffer;
+      if (key.length === 64) {
+        // privateKey
+        buf = Buffer.from(key, "hex");
+      } else {
+        // base58
+        buf = decode(key).slice(1, 33);
+      }
+
+      return ECPair.fromPrivateKey(buf);
+    });
   }
 
   async addAccounts(n = 1) {
