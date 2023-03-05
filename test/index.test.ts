@@ -1,3 +1,4 @@
+import * as bitcoin from "bitcoinjs-lib";
 import { expect } from "chai";
 import { SimpleKeyring } from "../src";
 
@@ -45,7 +46,7 @@ describe("bitcoin-simple-keyring", () => {
     });
   });
 
-  describe("#addAccounts", function () {
+  describe("#add accounts", function () {
     describe("with no arguments", function () {
       it("creates a single wallet", async function () {
         await keyring.addAccounts();
@@ -96,4 +97,17 @@ describe("bitcoin-simple-keyring", () => {
       });
     });
   });
+
+  describe("#sign message", function () {
+    it("verify sig success", async function () {
+      const newKeyring = new SimpleKeyring([testAccount.key]);
+      const accounts = await newKeyring.getAccounts();
+      const pubkey = accounts[0];
+      const msg = "HELLO WORLD";
+      const sig = await newKeyring.signMessage(pubkey, msg);
+      const verified = await newKeyring.verifyMessage(pubkey, msg, sig);
+      expect(verified).eq(true);
+    });
+  });
+
 });

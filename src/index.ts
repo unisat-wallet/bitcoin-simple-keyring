@@ -1,4 +1,6 @@
 import * as bitcoin from "bitcoinjs-lib";
+import bitcore from "bitcore-lib";
+import { isTaprootInput } from "bitcoinjs-lib/src/psbt/bip371";
 import { EventEmitter } from "events";
 import ECPairFactory, { ECPairInterface } from "ecpair";
 import * as ecc from "tiny-secp256k1";
@@ -40,12 +42,6 @@ function tweakSigner(signer: bitcoin.Signer, opts: any = {}): bitcoin.Signer {
   });
 }
 
-enum AddressType {
-  P2PKH,
-  P2WPKH,
-  P2TR,
-}
-
 export class SimpleKeyring extends EventEmitter {
   static type = type;
   type = type;
@@ -82,11 +78,7 @@ export class SimpleKeyring extends EventEmitter {
   async addAccounts(n = 1) {
     const newWallets: ECPairInterface[] = [];
     for (let i = 0; i < n; i++) {
-      newWallets.push(
-        ECPair.makeRandom({
-          network: this.network,
-        })
-      );
+      newWallets.push(ECPair.makeRandom());
     }
     this.wallets = this.wallets.concat(newWallets);
     const hexWallets = newWallets.map(({ publicKey }) =>
@@ -101,21 +93,51 @@ export class SimpleKeyring extends EventEmitter {
 
   async signTransaction(
     psbt: bitcoin.Psbt,
-    inputs: { index: number; publicKey: string; type: AddressType }[]
+    inputs: { index: number; publicKey: string; sighashTypes?: number[] }[],
+    opts?: any
   ) {
     inputs.forEach((input) => {
       const keyPair = this._getPrivateKeyFor(input.publicKey);
-
-      if (input.type == AddressType.P2TR) {
-        const signer = tweakSigner(keyPair, {
-          network: keyPair.network,
-        });
-        psbt.signInput(input.index, signer);
+      if (isTaprootInput(psbt.data.inputs[input.index])) {
+        const signer = tweakSigner(keyPair, opts);
+        psbt.signInput(input.index, signer, input.sighashTypes);
       } else {
         const signer = keyPair;
-        psbt.signInput(input.index, signer);
+        psbt.signInput(input.index, signer, input.sighashTypes);
       }
     });
+    return psbt;
+  }
+
+  async signMessage(publicKey: string, text: string) {
+    const keyPair = this._getPrivateKeyFor(publicKey);
+    const message = new bitcore.Message(text);
+    return message.sign(new bitcore.PrivateKey(keyPair.privateKey));
+  }
+
+  async verifyMessage(publicKey: string, text: string, sig: string) {
+    const message = new bitcore.Message(text);
+
+    var signature = bitcore.crypto.Signature.fromCompact(
+      Buffer.from(sig, "base64")
+    );
+    var hash = message.magicHash();
+
+    // recover the public key
+    var ecdsa = new bitcore.crypto.ECDSA();
+    ecdsa.hashbuf = hash;
+    ecdsa.sig = signature;
+
+    const pubkeyInSig = ecdsa.toPublicKey();
+
+    const pubkeyInSigString = new bitcore.PublicKey(
+      Object.assign({}, pubkeyInSig.toObject(), { compressed: true })
+    ).toString();
+    if (pubkeyInSigString != publicKey) {
+      return false;
+    }
+
+    return bitcore.crypto.ECDSA.verify(hash, signature, pubkeyInSig);
   }
 
   private _getPrivateKeyFor(publicKey: string) {
