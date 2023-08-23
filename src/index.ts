@@ -3,7 +3,7 @@ import bitcore from "bitcore-lib";
 import { isTaprootInput } from "bitcoinjs-lib/src/psbt/bip371";
 import { EventEmitter } from "events";
 import ECPairFactory, { ECPairInterface } from "ecpair";
-import * as ecc from "tiny-secp256k1";
+import ecc from "@bitcoinerlab/secp256k1";
 bitcoin.initEccLib(ecc);
 const ECPair = ECPairFactory(ecc);
 import { decode } from "bs58check";

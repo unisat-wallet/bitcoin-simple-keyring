@@ -32,11 +32,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@bitcoinerlab/secp256k1": "^1.0.5",
     "bitcoinjs-lib": "^6.1.0",
     "bitcore-lib": "^10.0.0",
     "bs58check": "^2.1.2",
-    "ecpair": "^2.1.0",
-    "tiny-secp256k1": "^2.2.1"
+    "ecpair": "^2.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",
