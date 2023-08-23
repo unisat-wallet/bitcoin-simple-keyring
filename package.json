@@ -1,6 +1,6 @@
 {
   "name": "@unisat/bitcoin-simple-keyring",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "A simple standard interface for a series of bitcoin private keys.",
   "keywords": [
     "bitcoin",
